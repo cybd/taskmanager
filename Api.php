@@ -10,6 +10,42 @@ class Api {
         $this->router();
     }
 
+    private function router(): void
+    {
+        $route = $_SERVER['PATH_INFO'] ?? '';
+        $token = $_REQUEST['token'] ?? '';
+        switch ($route) {
+            case '/v1/login':
+                $email = $_REQUEST['email'] ?? '';
+                $password = $_REQUEST['password'] ?? '';
+                $this->loginAction($email, $password);
+                break;
+            case '/v1/register':
+                $email = $_REQUEST['email'] ?? '';
+                $password = $_REQUEST['password'] ?? '';
+                $this->registerAction($email, $password);
+                break;
+            case '/v1/myTasks':
+                $this->validateToken($token);
+                $this->getMyTasksAction();
+                break;
+            case '/v1/createTask':
+                $this->validateToken($token);
+                $this->createTaskAction();
+                break;
+            case '/v1/markAsDone':
+                $this->validateToken($token);
+                $this->markAsDoneAction();
+                break;
+            case '/v1/deleteTask':
+                $this->validateToken($token);
+                $this->deleteTaskAction();
+                break;
+            default:
+                $this->unknownAction();
+        }
+    }
+
     /**
      * @param string $email
      * @param string $password
@@ -20,18 +56,44 @@ class Api {
         $this->formatResponse(['data' => $token]);
     }
 
-    private function router(): void
+    public function registerAction(string $email, string $password): void
     {
-        $route = $_SERVER['PATH_INFO'] ?? '';
-        switch ($route) {
-            case '/v1/login':
-                $email = $_REQUEST['email'] ?? '';
-                $password = $_REQUEST['password'] ?? '';
-                $this->loginAction($email, $password);
-                break;
-            default:
-                $this->unknownAction();
-        }
+        // TODO: implement
+        $this->formatResponse(['data' => 'register action']);
+    }
+
+    public function getMyTasksAction(): void
+    {
+        // TODO: implement
+        $this->formatResponse(['data' => 'get my tasks action']);
+    }
+
+    public function createTaskAction(): void
+    {
+        // TODO: implement
+        $this->formatResponse(['data' => 'create task action']);
+    }
+
+    public function markAsDoneAction(): void
+    {
+        // TODO: implement
+        $this->formatResponse(['data' => 'mark as done action']);
+    }
+
+    public function deleteTaskAction(): void
+    {
+        // TODO: implement
+        $this->formatResponse(['data' => 'delete task action']);
+    }
+
+    /**
+     * @param string $token
+     * @return bool
+     */
+    private function validateToken(string $token): bool
+    {
+        // TODO: implement
+        return true;
     }
 
     /**
