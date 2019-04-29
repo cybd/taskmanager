@@ -26,7 +26,7 @@ class Api {
         '11' => [
             [
                 'id' => 10,
-                'title' => 'Finish Trial task',
+                'title' => 'Finish Trial task.sql',
                 'status' => 'active',
                 'priority' => 'high',
                 'dueDate' => 1556189059,
@@ -55,7 +55,9 @@ class Api {
 
     private function router(): void
     {
-        $route = $_SERVER['PATH_INFO'] ?? '';
+        $parsedUrl = parse_url($_SERVER['REQUEST_URI']);
+        $route = $parsedUrl['path'] ?? '';
+        $query = $parsedUrl['query'] ?? '';
         $token = $_SERVER['HTTP_TOKEN'] ?? '';
         $email = $_REQUEST['email'] ?? '';
         $password = $_REQUEST['password'] ?? '';
@@ -98,15 +100,15 @@ class Api {
      */
     public function loginAction(string $email, string $password): void
     {
-        try {
-            $userId = $this->getUserId($email, $password);
-            $token = $this->getTokenByUserId($userId);
-            $this->formatResponse(['data' => $token]);
-        } catch (\Exception $e) {
-            $this->internalServerErrorResponse($e->getMessage());
-        }
-//        $token = $this->getToken($email, $password);
-//        $this->formatResponse(['data' => $token]);
+//        try {
+//            $userId = $this->getUserId($email, $password);
+//            $token = $this->getTokenByUserId($userId);
+//            $this->formatResponse(['data' => $token]);
+//        } catch (\Exception $e) {
+//            $this->internalServerErrorResponse($e->getMessage());
+//        }
+        $token = $this->getToken($email, $password);
+        $this->formatResponse(['data' => $token]);
     }
 
     public function registerAction(string $email, string $password): void
@@ -125,7 +127,7 @@ class Api {
     public function createTaskAction(): void
     {
         // TODO: implement
-        $this->formatResponse(['data' => 'create task action']);
+        $this->formatResponse(['data' => 'create task.sql action']);
     }
 
     public function markAsDoneAction(): void
@@ -137,7 +139,7 @@ class Api {
     public function deleteTaskAction(): void
     {
         // TODO: implement
-        $this->formatResponse(['data' => 'delete task action']);
+        $this->formatResponse(['data' => 'delete task.sql action']);
     }
 
     /**
