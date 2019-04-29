@@ -7,7 +7,7 @@ class Api {
 
     private const API_TOKEN_SALT = 'MyLittleSaltHere2019';
 
-    private static $tokenArray = [
+    private $tokenArray = [
         'd98bc7701f03aca772b2f00921daa42e8904d87a' => [
             'userId' => 11,
             'expireAt' => 1556369432, // expired
@@ -22,7 +22,7 @@ class Api {
         ],
     ];
 
-    private static $taskArray = [
+    private $taskArray = [
         '11' => [
             [
                 'id' => 10,
