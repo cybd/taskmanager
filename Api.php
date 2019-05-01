@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 
-require_once 'Exceptions/NotFoundException.php';
-require_once 'Exceptions/UnauthorizedException.php';
+require_once 'Exception/NotFoundException.php';
+require_once 'Exception/UnauthorizedException.php';
+require_once 'Model/Task.php';
 
 class Api {
 
@@ -9,11 +10,11 @@ class Api {
 
     private $tokenArray = [
         'd98bc7701f03aca772b2f00921daa42e8904d87a' => [
-            'userId' => 11,
+            'userId' => 1,
             'expireAt' => 1556369432, // expired
         ],
         'ba66df5d449a1318a16baef6f10be41d0a7c5d3b' => [
-            'userId' => 11,
+            'userId' => 1,
             'expireAt' => 1656369432, // valid
         ],
         '1dcc07cbffafba6122153ddee83855b6120b3ece' => [
@@ -23,7 +24,7 @@ class Api {
     ];
 
     private $taskArray = [
-        '11' => [
+        '1' => [
             [
                 'id' => 10,
                 'title' => 'Finish Trial task.sql',
@@ -47,12 +48,23 @@ class Api {
             ]
         ]
     ];
+    /** @var PDO */
+    private $connection;
 
     public function init(): void
     {
-        $this->router();
+        try {
+            $this->connection = $this->getConnection();
+            $this->router();
+        } catch (\Throwable $e) {
+            $this->internalServerErrorResponse($e->getMessage());
+        }
     }
 
+    /**
+     * @throws NotFoundException
+     * @throws UnauthorizedException
+     */
     private function router(): void
     {
         $parsedUrl = parse_url($_SERVER['REQUEST_URI']);
@@ -61,36 +73,32 @@ class Api {
         $token = $_SERVER['HTTP_TOKEN'] ?? '';
         $email = $_REQUEST['email'] ?? '';
         $password = $_REQUEST['password'] ?? '';
-        try {
-            switch ($route) {
-                case '/v1/login':
-                    $this->loginAction($email, $password);
-                    break;
-                case '/v1/register':
-                    $this->registerAction($email, $password);
-                    break;
-                case '/v1/myTasks':
-                    $this->validateToken($token);
-                    $userId = $this->getUserIdByToken($token);
-                    $this->getMyTasksAction($userId);
-                    break;
-                case '/v1/createTask':
-                    $this->validateToken($token);
-                    $this->createTaskAction();
-                    break;
-                case '/v1/markAsDone':
-                    $this->validateToken($token);
-                    $this->markAsDoneAction();
-                    break;
-                case '/v1/deleteTask':
-                    $this->validateToken($token);
-                    $this->deleteTaskAction();
-                    break;
-                default:
-                    $this->unknownAction();
-            }
-        } catch (\Exception $e) {
-            $this->internalServerErrorResponse($e->getMessage());
+        switch ($route) {
+            case '/v1/login':
+                $this->loginAction($email, $password);
+                break;
+            case '/v1/register':
+                $this->registerAction($email, $password);
+                break;
+            case '/v1/myTasks':
+                $this->validateToken($token);
+                $userId = $this->getUserIdByToken($token);
+                $this->getMyTasksAction($userId);
+                break;
+            case '/v1/createTask':
+                $this->validateToken($token);
+                $this->createTaskAction();
+                break;
+            case '/v1/markAsDone':
+                $this->validateToken($token);
+                $this->markAsDoneAction();
+                break;
+            case '/v1/deleteTask':
+                $this->validateToken($token);
+                $this->deleteTaskAction();
+                break;
+            default:
+                $this->unknownAction();
         }
     }
 
@@ -119,6 +127,18 @@ class Api {
 
     public function getMyTasksAction(int $userId): void
     {
+        $sth = $this->connection->prepare('SELECT * FROM task WHERE userId = :userId');
+        $sth->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $sth->execute();
+
+        $arguments = [];
+        $sth->setFetchMode(PDO::FETCH_CLASS, 'Task', $arguments);
+        $result = $sth->fetchAll();
+
+//        var_dump($result[0]->dueDate);
+        var_dump($result);
+        die();
+
         $userTaskArray = $this->taskArray[$userId] ?? [];
         // TODO: implement
         $this->formatResponse(['data' => $userTaskArray]);
@@ -237,5 +257,22 @@ class Api {
 
             ]
         ];
+    }
+
+    /**
+     * @return PDO
+     */
+    private function getConnection(): \PDO
+    {
+        return new \PDO(
+            'mysql:host=localhost;dbname=taskmanager',
+            'taskmanager_u',
+            'N11mKZaBs9wL7u6Y',
+            [
+                \PDO::ATTR_PERSISTENT => true,
+                \PDO::MYSQL_ATTR_INIT_COMMAND => 'set names utf8',
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]
+        );
     }
 }
