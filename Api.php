@@ -3,6 +3,8 @@
 require_once 'Exception/NotFoundException.php';
 require_once 'Exception/UnauthorizedException.php';
 require_once 'Model/Task.php';
+require_once 'MySQLConnection.php';
+require_once 'Repository/TaskRepository.php';
 
 class Api {
 
@@ -48,13 +50,10 @@ class Api {
             ]
         ]
     ];
-    /** @var PDO */
-    private $connection;
 
     public function init(): void
     {
         try {
-            $this->connection = $this->getConnection();
             $this->router();
         } catch (\Throwable $e) {
             $this->internalServerErrorResponse($e->getMessage());
@@ -127,15 +126,8 @@ class Api {
 
     public function getMyTasksAction(int $userId): void
     {
-        $sth = $this->connection->prepare('SELECT * FROM task WHERE userId = :userId');
-        $sth->bindParam(':userId', $userId, PDO::PARAM_INT);
-        $sth->execute();
-
-        $arguments = [];
-        $sth->setFetchMode(PDO::FETCH_CLASS, 'Task', $arguments);
-        $result = $sth->fetchAll();
-
-//        var_dump($result[0]->dueDate);
+        $repository = new TaskRepository($this->getConnection());
+        $result = $repository->getListByUserId($userId);
         var_dump($result);
         die();
 
@@ -260,12 +252,13 @@ class Api {
     }
 
     /**
-     * @return PDO
+     * @return MySQLConnection
      */
-    private function getConnection(): \PDO
+    private function getConnection(): MySQLConnection
     {
-        return new \PDO(
-            'mysql:host=localhost;dbname=taskmanager',
+        return new MySQLConnection(
+            'localhost',
+            'taskmanager',
             'taskmanager_u',
             'N11mKZaBs9wL7u6Y',
             [

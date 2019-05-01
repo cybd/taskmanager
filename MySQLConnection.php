@@ -1,22 +1,19 @@
 <?php declare(strict_types=1);
 
 
-class MySQLConnection
+class MySQLConnection extends \PDO
 {
     /**
      * MySQLConnection constructor.
-     * @param string $dsn
+     * @param string $host
+     * @param string $dbName
      * @param string $user
      * @param string $password
      * @param array $options
-     * @return PDO
      */
-    public static function getConnection(string $dsn, string $user, string $password, array $options)
+    public function __construct(string $host, string $dbName, string $user, string $password, array $options)
     {
-        try {
-            return new PDO($dsn, $user, $password, $options);
-        } catch (\Throwable $e) {
-            echo $e->getMessage();
-        }
+        $dsn = "mysql:host=$host;dbname=$dbName";
+        parent::__construct($dsn, $user, $password, $options);
     }
 }

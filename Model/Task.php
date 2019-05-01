@@ -22,14 +22,14 @@ class Task {
      * @param $priority
      * @param $dueDate
      */
-//    public function __construct(string $title, int $userId, int $status, int $priority, int $dueDate)
-//    {
-//        $this->title = $title;
-//        $this->userId = $userId;
-//        $this->status = $status;
-//        $this->priority = $priority;
-//        $this->dueDate = $dueDate;
-//    }
+    public function __construct(string $title, int $userId, int $status, int $priority, int $dueDate)
+    {
+        $this->title = $title;
+        $this->userId = $userId;
+        $this->status = $status;
+        $this->priority = $priority;
+        $this->dueDate = $dueDate;
+    }
 
     /**
      * @return mixed
