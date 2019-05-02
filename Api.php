@@ -2,10 +2,10 @@
 
 require_once 'Exception/NotFoundException.php';
 require_once 'Exception/UnauthorizedException.php';
-require_once 'Model/Task.php';
 require_once 'MySQLConnection.php';
 require_once 'Repository/TaskRepository.php';
-require_once 'Mapper/TaskMapper.php';
+require_once 'Repository/TokenRepository.php';
+require_once 'Repository/UserRepository.php';
 
 class Api {
 
@@ -25,6 +25,9 @@ class Api {
             'expireAt' => 1756369432, // valid
         ],
     ];
+
+    /** @var MySQLConnection */
+    private $connection;
 
     public function init(): void
     {
@@ -82,15 +85,16 @@ class Api {
      */
     public function loginAction(string $email, string $password): void
     {
-//        try {
-//            $userId = $this->getUserId($email, $password);
-//            $token = $this->getTokenByUserId($userId);
-//            $this->formatResponse(['data' => $token]);
-//        } catch (\Exception $e) {
-//            $this->internalServerErrorResponse($e->getMessage());
-//        }
-        $token = $this->getToken($email, $password);
-        $this->formatResponse(['data' => $token]);
+        try {
+            $userRepository = new UserRepository($this->getConnection());
+            $user = $userRepository->getUserByEmailAndPassword($email, $password);
+            $token = $this->generateTokenByUser($user);
+            $this->formatResponse(['data' => $token]);
+        } catch (NotFoundException $e) {
+            $this->internalServerErrorResponse('Not found. ' . $e->getMessage());
+        } catch (\Exception $e) {
+            $this->internalServerErrorResponse($e->getMessage());
+        }
     }
 
     public function registerAction(string $email, string $password): void
@@ -189,13 +193,12 @@ class Api {
     }
 
     /**
-     * @param string $email
-     * @param string $password
+     * @param User $user
      * @return string
      */
-    private function getToken(string $email, string $password): string
+    private function generateTokenByUser(User $user): string
     {
-        return sha1($email . $password . self::API_TOKEN_SALT . microtime());
+        return sha1($user->getEmail() . $user->getId() . self::API_TOKEN_SALT . microtime());
     }
 
     public function unknownAction(): void
@@ -224,31 +227,24 @@ class Api {
         );
     }
 
-    private function getUserId($email, $password): int
-    {
-        $data = [
-            '' => [
-                'password' => '',
-
-            ]
-        ];
-    }
-
     /**
      * @return MySQLConnection
      */
     private function getConnection(): MySQLConnection
     {
-        return new MySQLConnection(
-            'localhost',
-            'taskmanager',
-            'taskmanager_u',
-            'N11mKZaBs9wL7u6Y',
-            [
-                \PDO::ATTR_PERSISTENT => true,
-                \PDO::MYSQL_ATTR_INIT_COMMAND => 'set names utf8',
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            ]
-        );
+        if ($this->connection === null) {
+            $this->connection = new MySQLConnection(
+                'localhost',
+                'taskmanager',
+                'taskmanager_u',
+                'N11mKZaBs9wL7u6Y',
+                [
+                    \PDO::ATTR_PERSISTENT => true,
+                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'set names utf8',
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                ]
+            );
+        }
+        return $this->connection;
     }
 }
