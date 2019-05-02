@@ -12,21 +12,6 @@ class Api {
     private const API_TOKEN_SALT = 'MyLittleSaltHere2019';
     private const API_TOKEN_LIFETIME = 60 * 15; // 15 min
 
-    private $tokenArray = [
-        'd98bc7701f03aca772b2f00921daa42e8904d87a' => [
-            'userId' => 1,
-            'expireAt' => 1556369432, // expired
-        ],
-        'ba66df5d449a1318a16baef6f10be41d0a7c5d3b' => [
-            'userId' => 1,
-            'expireAt' => 1656369432, // valid
-        ],
-        '1dcc07cbffafba6122153ddee83855b6120b3ece' => [
-            'userId' => 99,
-            'expireAt' => 1756369432, // valid
-        ],
-    ];
-
     /** @var MySQLConnection */
     private $connection;
 
@@ -40,7 +25,6 @@ class Api {
     }
 
     /**
-     * @throws NotFoundException
      * @throws UnauthorizedException
      */
     private function router(): void
@@ -59,9 +43,8 @@ class Api {
                 $this->registerAction($email, $password);
                 break;
             case '/v1/myTasks':
-                $this->validateToken($token);
-                $userId = $this->getUserIdByToken($token);
-                $this->getMyTasksAction($userId);
+                $tokenData = $this->validateToken($token);
+                $this->getMyTasksAction($tokenData->getUserId());
                 break;
             case '/v1/createTask':
                 $this->validateToken($token);
@@ -158,41 +141,24 @@ class Api {
 
     /**
      * @param string $token
-     * @return void
+     * @return Token
      * @throws UnauthorizedException
      */
-    private function validateToken(string $token): void
+    private function validateToken(string $token): Token
     {
         if ($token === '') {
             throw new UnauthorizedException('Token is empty');
         }
-        $tokenData = $this->tokenArray[$token] ?? [];
-        if (\count($tokenData) === 0) {
+        try {
+            $tokenRepository = new TokenRepository($this->getConnection());
+            $tokenData = $tokenRepository->getByToken($token);
+            if (time() > $tokenData->getExpireAt()) {
+                throw new UnauthorizedException('Token has been expired');
+            }
+        } catch (NotFoundException $e) {
             throw new UnauthorizedException('Token was not found');
         }
-        $expireAt = $tokenData['expireAt'] ?? 0;
-        if (time() > $expireAt) {
-            throw new UnauthorizedException('Token has been expired');
-        }
-    }
-
-    /**
-     * @param string $token
-     * @return int
-     * @throws NotFoundException
-     */
-    private function getUserIdByToken(string $token): int
-    {
-        $tokenData = $this->tokenArray[$token] ?? '';
-        if ($tokenData !== '') {
-            return $tokenData['userId'];
-        }
-        throw new NotFoundException(
-            sprintf(
-                'User not found by token %s',
-                $token
-            )
-        );
+        return $tokenData;
     }
 
     /**

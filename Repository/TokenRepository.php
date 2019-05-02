@@ -68,4 +68,34 @@ class TokenRepository
             (int) $this->connection->lastInsertId()
         );
     }
+
+    /**
+     * @param string $token
+     * @return Token
+     * @throws NotFoundException
+     */
+    public function getByToken(string $token): Token
+    {
+        $sth = $this->connection->prepare('SELECT * FROM `token` WHERE token = :token');
+        $sth->bindParam(':token', $token, PDO::PARAM_STR);
+        $sth->execute();
+        $result = $sth->fetchAll(PDO::FETCH_ASSOC);
+        if ($sth->rowCount() === 0) {
+            throw new NotFoundException(
+                sprintf(
+                    'Token %s',
+                    $token
+                )
+            );
+        }
+        if ($sth->rowCount() > 1) {
+            throw new \LogicException(
+                sprintf(
+                    'Returned more than one row, Token %s',
+                    $token
+                )
+            );
+        }
+        return $this->mapper->fromArray($result[0]);
+    }
 }
