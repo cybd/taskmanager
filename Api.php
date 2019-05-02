@@ -5,6 +5,7 @@ require_once 'Exception/UnauthorizedException.php';
 require_once 'Model/Task.php';
 require_once 'MySQLConnection.php';
 require_once 'Repository/TaskRepository.php';
+require_once 'Mapper/TaskMapper.php';
 
 class Api {
 
@@ -23,32 +24,6 @@ class Api {
             'userId' => 99,
             'expireAt' => 1756369432, // valid
         ],
-    ];
-
-    private $taskArray = [
-        '1' => [
-            [
-                'id' => 10,
-                'title' => 'Finish Trial task.sql',
-                'status' => 'active',
-                'priority' => 'high',
-                'dueDate' => 1556189059,
-            ],
-            [
-                'id' => 23,
-                'title' => 'Fix my watch',
-                'status' => 'active',
-                'priority' => 'low',
-                'dueDate' => 1556199001,
-            ],
-            [
-                'id' => 9,
-                'title' => 'Find a new Job',
-                'status' => 'done',
-                'priority' => 'high',
-                'dueDate' => 1553145057,
-            ]
-        ]
     ];
 
     public function init(): void
@@ -127,13 +102,21 @@ class Api {
     public function getMyTasksAction(int $userId): void
     {
         $repository = new TaskRepository($this->getConnection());
-        $result = $repository->getListByUserId($userId);
-        var_dump($result);
-        die();
-
-        $userTaskArray = $this->taskArray[$userId] ?? [];
-        // TODO: implement
-        $this->formatResponse(['data' => $userTaskArray]);
+        $taskCollection = $repository->getListByUserId($userId);
+        $result = [];
+        if (\count($taskCollection) > 0) {
+            /** @var Task $task */
+            foreach ($taskCollection as $task) {
+                $result[] = [
+                    'id' => $task->getId(),
+                    'title' => $task->getTitle(),
+                    'status' => $task->getStatus(),
+                    'priority' => $task->getPriority(),
+                    'dueDate' => $task->getDueDate(),
+                ];
+            }
+        }
+        $this->formatResponse(['data' => $result]);
     }
 
     public function createTaskAction(): void

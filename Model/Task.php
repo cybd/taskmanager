@@ -16,19 +16,21 @@ class Task {
 
     /**
      * Task constructor.
-     * @param $title
-     * @param $userId
-     * @param $status
-     * @param $priority
-     * @param $dueDate
+     * @param int $id
+     * @param string $title
+     * @param int $userId
+     * @param int $status
+     * @param int $priority
+     * @param int $dueDate
      */
-    public function __construct(string $title, int $userId, int $status, int $priority, int $dueDate)
+    public function __construct(int $id, string $title, int $userId, int $status, int $priority, int $dueDate)
     {
         $this->title = $title;
         $this->userId = $userId;
         $this->status = $status;
         $this->priority = $priority;
         $this->dueDate = $dueDate;
+        $this->id = $id;
     }
 
     /**

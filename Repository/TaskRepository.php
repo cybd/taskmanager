@@ -1,15 +1,13 @@
 <?php declare(strict_types=1);
 
+require_once 'Mapper/TaskMapper.php';
+
 class TaskRepository
 {
-    /**
-     * @var MySQLConnection
-     */
+    /** @var MySQLConnection */
     private $connection;
-    /** @var array */
-    private $ctorArgs = [
-        '', 0, 0, 0, 0
-    ];
+    /** @var TaskMapper */
+    private $mapper;
 
     /**
      * TaskRepository constructor.
@@ -18,6 +16,7 @@ class TaskRepository
     public function __construct(MySQLConnection $connection)
     {
         $this->connection = $connection;
+        $this->mapper = new TaskMapper();
     }
 
     /**
@@ -29,7 +28,9 @@ class TaskRepository
         $sth = $this->connection->prepare('SELECT * FROM task WHERE userId = :userId');
         $sth->bindParam(':userId', $userId, PDO::PARAM_INT);
         $sth->execute();
-        $sth->setFetchMode(PDO::FETCH_CLASS, 'Task', $this->ctorArgs);
-        return $sth->fetchAll();
+        $result = $sth->fetchAll(PDO::FETCH_ASSOC);
+        return array_map(function ($row) {
+            return $this->mapper->fromArray($row);
+        }, $result);
     }
 }
