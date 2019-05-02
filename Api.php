@@ -10,6 +10,7 @@ require_once 'Repository/UserRepository.php';
 class Api {
 
     private const API_TOKEN_SALT = 'MyLittleSaltHere2019';
+    private const API_TOKEN_LIFETIME = 60 * 15; // 15 min
 
     private $tokenArray = [
         'd98bc7701f03aca772b2f00921daa42e8904d87a' => [
@@ -88,8 +89,22 @@ class Api {
         try {
             $userRepository = new UserRepository($this->getConnection());
             $user = $userRepository->getUserByEmailAndPassword($email, $password);
-            $token = $this->generateTokenByUser($user);
-            $this->formatResponse(['data' => $token]);
+
+            $tokenRepository = new TokenRepository($this->getConnection());
+            $expireAt = time() + self::API_TOKEN_LIFETIME;
+            $token = $tokenRepository->addToken(
+                new Token(
+                    0,
+                    $user->getId(),
+                    $this->generateTokenByUser($user),
+                    $expireAt
+                )
+            );
+            $data = [
+                'token' => $token->getToken(),
+                'expireAt' => $token->getExpireAt(),
+            ];
+            $this->formatResponse(['data' => $data]);
         } catch (NotFoundException $e) {
             $this->internalServerErrorResponse('Not found. ' . $e->getMessage());
         } catch (\Exception $e) {

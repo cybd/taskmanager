@@ -9,20 +9,20 @@ class Token
     /** @var string */
     private $token;
     /** @var int */
-    private $expiredAt;
+    private $expireAt;
 
     /**
      * @param int $id
      * @param int $userId
      * @param string $token
-     * @param int $expiredAt
+     * @param int $expireAt
      */
-    public function __construct(int $id, int $userId, string $token, int $expiredAt)
+    public function __construct(int $id, int $userId, string $token, int $expireAt)
     {
         $this->id = $id;
         $this->userId = $userId;
         $this->token = $token;
-        $this->expiredAt = $expiredAt;
+        $this->expireAt = $expireAt;
     }
 
     /**
@@ -52,8 +52,8 @@ class Token
     /**
      * @return int
      */
-    public function getExpiredAt(): int
+    public function getExpireAt(): int
     {
-        return $this->expiredAt;
+        return $this->expireAt;
     }
 }

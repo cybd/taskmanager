@@ -14,7 +14,7 @@ class TokenMapper
             (int) $map['id'],
             (int) $map['userId'],
             $map['token'],
-            (int) $map['expiredAt']
+            (int) $map['expireAt']
         );
     }
 
@@ -28,7 +28,7 @@ class TokenMapper
             'id' => $token->getId(),
             'userId' => $token->getUserId(),
             'token' => $token->getToken(),
-            'expiredAt' => $token->getExpiredAt(),
+            'expireAt' => $token->getExpireAt(),
         ];
     }
 }

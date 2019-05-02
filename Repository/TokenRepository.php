@@ -33,4 +33,39 @@ class TokenRepository
         $result = $sth->fetch(PDO::FETCH_ASSOC);
         return $this->mapper->fromArray($result);
     }
+
+    /**
+     * @param int $id
+     * @return Token
+     */
+    public function getById(int $id): Token
+    {
+        $sth = $this->connection->prepare('SELECT * FROM `token` WHERE id = :id');
+        $sth->bindParam(':id', $id, PDO::PARAM_INT);
+        $sth->execute();
+        $result = $sth->fetch(PDO::FETCH_ASSOC);
+        return $this->mapper->fromArray($result);
+    }
+
+    /**
+     * @param Token $token
+     * @return Token
+     */
+    public function addToken(Token $token): Token
+    {
+        $sth = $this->connection->prepare(
+            'INSERT INTO `token` (`userId`, `token`, `expireAt`)
+            VALUES (:userId, :token, :expireAt)'
+        );
+        $sth->execute(
+            [
+                ':userId' => $token->getUserId(),
+                ':token' => $token->getToken(),
+                ':expireAt' => $token->getExpireAt(),
+            ]
+        );
+        return $this->getById(
+            (int) $this->connection->lastInsertId()
+        );
+    }
 }
