@@ -2,6 +2,7 @@
 
 require_once 'Mapper/UserMapper.php';
 require_once 'Exception/NotFoundException.php';
+require_once 'Exception/DatabaseDuplicateException.php';
 
 class UserRepository
 {
@@ -50,5 +51,53 @@ class UserRepository
             );
         }
         return $this->mapper->fromArray($result[0]);
+    }
+
+    /**
+     * @param int $id
+     * @return User
+     */
+    public function getById(int $id): User
+    {
+        $sth = $this->connection->prepare('SELECT * FROM `user` WHERE id = :id');
+        $sth->bindParam(':id', $id, PDO::PARAM_INT);
+        $sth->execute();
+        $result = $sth->fetch(PDO::FETCH_ASSOC);
+        return $this->mapper->fromArray($result);
+    }
+
+    /**
+     * @param string $email
+     * @param string $password
+     * @return User
+     * @throws Throwable
+     */
+    public function addUser(string $email, string $password): User
+    {
+        try {
+            $sth = $this->connection->prepare(
+                'INSERT INTO `user` (`email`, `password`)
+            VALUES (:email, :password)'
+            );
+            $sth->execute(
+                [
+                    ':email' => $email,
+                    ':password' => $password,
+                ]
+            );
+        } catch (\Throwable $e) {
+            if ($e->getCode() === '23000') {
+                throw new DatabaseDuplicateException(
+                    sprintf(
+                        'User with email %s already exists',
+                        $email
+                    )
+                );
+            }
+            throw $e;
+        }
+        return $this->getById(
+            (int) $this->connection->lastInsertId()
+        );
     }
 }

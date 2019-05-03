@@ -72,7 +72,6 @@ class Api {
         try {
             $userRepository = new UserRepository($this->getConnection());
             $user = $userRepository->getUserByEmailAndPassword($email, $password);
-
             $tokenRepository = new TokenRepository($this->getConnection());
             $expireAt = time() + self::API_TOKEN_LIFETIME;
             $token = $tokenRepository->addToken(
@@ -95,10 +94,29 @@ class Api {
         }
     }
 
+    /**
+     * @param string $email
+     * @param string $password
+     */
     public function registerAction(string $email, string $password): void
     {
-        // TODO: implement
-        $this->formatResponse(['data' => 'register action']);
+        $userRepository = new UserRepository($this->getConnection());
+        $user = $userRepository->addUser($email, $password);
+        $tokenRepository = new TokenRepository($this->getConnection());
+        $expireAt = time() + self::API_TOKEN_LIFETIME;
+        $token = $tokenRepository->addToken(
+            new Token(
+                0,
+                $user->getId(),
+                $this->generateTokenByUser($user),
+                $expireAt
+            )
+        );
+        $data = [
+            'token' => $token->getToken(),
+            'expireAt' => $token->getExpireAt(),
+        ];
+        $this->formatResponse(['data' => $data]);
     }
 
     public function getMyTasksAction(int $userId): void
