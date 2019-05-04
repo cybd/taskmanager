@@ -26,12 +26,14 @@ class Api {
 
     /**
      * @throws UnauthorizedException
+     * @throws Throwable
      */
     private function router(): void
     {
         $parsedUrl = parse_url($_SERVER['REQUEST_URI']);
         $route = $parsedUrl['path'] ?? '';
-        $query = $parsedUrl['query'] ?? '';
+        $queryParams = [];
+        parse_str($parsedUrl['query'] ?? '', $queryParams);
         $token = $_SERVER['HTTP_TOKEN'] ?? '';
         $email = $_REQUEST['email'] ?? '';
         $password = $_REQUEST['password'] ?? '';
@@ -44,7 +46,7 @@ class Api {
                 break;
             case '/v1/myTasks':
                 $tokenData = $this->validateToken($token);
-                $this->getMyTasksAction($tokenData->getUserId());
+                $this->getMyTasksAction($tokenData->getUserId(), $queryParams);
                 break;
             case '/v1/createTask':
                 $this->validateToken($token);
@@ -97,6 +99,7 @@ class Api {
     /**
      * @param string $email
      * @param string $password
+     * @throws Throwable
      */
     public function registerAction(string $email, string $password): void
     {
@@ -119,10 +122,16 @@ class Api {
         $this->formatResponse(['data' => $data]);
     }
 
-    public function getMyTasksAction(int $userId): void
+    public function getMyTasksAction(int $userId, array $params): void
     {
         $repository = new TaskRepository($this->getConnection());
-        $taskCollection = $repository->getListByUserId($userId);
+        $taskCollection = $repository->getListByUserId(
+            $userId,
+            $params['sort'] ?? 'id',
+            array_key_exists('sortDesc', $params),
+            (int) ($params['page'] ?? 1),
+            (int) ($params['perPage'] ?? 10)
+        );
         $result = [];
         if (\count($taskCollection) > 0) {
             /** @var Task $task */

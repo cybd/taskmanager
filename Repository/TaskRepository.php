@@ -21,11 +21,24 @@ class TaskRepository
 
     /**
      * @param int $userId
+     * @param string $sort
+     * @param bool $sortDesc
+     * @param int $page
+     * @param int $perPage
      * @return array
      */
-    public function getListByUserId(int $userId): array
-    {
-        $sth = $this->connection->prepare('SELECT * FROM task WHERE userId = :userId');
+    public function getListByUserId(
+        int $userId,
+        string $sort,
+        bool $sortDesc = false,
+        int $page = 1,
+        int $perPage = 10
+    ): array {
+        $page = $page < 1 ? 1 : $page;
+        $sort = in_array($sort, ['title', 'dueDate', 'priority']) ? $sort : 'id';
+        $sortQuery = sprintf(' ORDER BY `%s` %s', $sort, $sortDesc ? 'DESC' : '');
+        $limitQuery = sprintf(' LIMIT %s, %s', ($page - 1) * $perPage, $perPage);
+        $sth = $this->connection->prepare('SELECT * FROM task WHERE userId = :userId' . $sortQuery . $limitQuery);
         $sth->bindParam(':userId', $userId, PDO::PARAM_INT);
         $sth->execute();
         $result = $sth->fetchAll(PDO::FETCH_ASSOC);
