@@ -86,4 +86,32 @@ class TaskRepository
             (int) $this->connection->lastInsertId()
         );
     }
+
+    /**
+     * @param Task $task
+     * @return Task
+     */
+    public function updateTask(Task $task): Task
+    {
+        $sth = $this->connection->prepare(
+            'UPDATE `task` SET 
+          `title` = :title,
+          `userId` = :userId,
+          `status` = :status,
+          `priority` = :priority,
+          `dueDate` = :dueDate
+          WHERE `id` = :id'
+        );
+        $sth->execute(
+            [
+                ':title' => $task->getTitle(),
+                ':userId' => $task->getUserId(),
+                ':status' => $task->getStatus(),
+                ':priority' => $task->getPriority(),
+                ':dueDate' => $task->getDueDate(),
+                ':id' => $task->getId(),
+            ]
+        );
+        return $this->getById($task->getId());
+    }
 }

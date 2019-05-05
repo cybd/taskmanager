@@ -6,6 +6,7 @@ require_once 'MySQLConnection.php';
 require_once 'Repository/TaskRepository.php';
 require_once 'Repository/TokenRepository.php';
 require_once 'Repository/UserRepository.php';
+require_once 'Mapper/TaskMapper.php';
 
 class Api {
 
@@ -55,8 +56,8 @@ class Api {
                 $this->createTaskAction($tokenData->getUserId(), $postBody);
                 break;
             case '/v1/markAsDone':
-                $this->validateToken($token);
-                $this->markAsDoneAction();
+                $tokenData = $this->validateToken($token);
+                $this->markAsDoneAction($tokenData->getUserId(), $postBody);
                 break;
             case '/v1/deleteTask':
                 $this->validateToken($token);
@@ -124,6 +125,10 @@ class Api {
         $this->formatResponse(['data' => $data]);
     }
 
+    /**
+     * @param int $userId
+     * @param array $params
+     */
     public function getMyTasksAction(int $userId, array $params): void
     {
         $repository = new TaskRepository($this->getConnection());
@@ -172,13 +177,29 @@ class Api {
                 $dueDate
             )
         );
-        $this->formatResponse(['data' => $task]);
+        $mapper = new TaskMapper();
+        $this->formatResponse(['data' => $mapper->toArray($task)]);
     }
 
-    public function markAsDoneAction(): void
+    public function markAsDoneAction(int $userId, array $queryData): void
     {
-        // TODO: implement
-        $this->formatResponse(['data' => 'mark as done action']);
+        $id = (int)($queryData['id'] ?? 0);
+
+        $taskRepository = new TaskRepository($this->getConnection());
+        $task = $taskRepository->getById($id);
+        $doneStatus = 2;
+        $task = $taskRepository->updateTask(
+            new Task(
+                $task->getId(),
+                $task->getTitle(),
+                $task->getUserId(),
+                $doneStatus,
+                $task->getPriority(),
+                $task->getDueDate()
+            )
+        );
+        $mapper = new TaskMapper();
+        $this->formatResponse(['data' => $mapper->toArray($task)]);
     }
 
     public function deleteTaskAction(): void
