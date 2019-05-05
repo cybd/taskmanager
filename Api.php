@@ -36,6 +36,8 @@ class Api {
         parse_str($parsedUrl['query'] ?? '', $queryParams);
         $token = $_SERVER['HTTP_TOKEN'] ?? '';
         $email = $_REQUEST['email'] ?? '';
+        $postBodyRaw = file_get_contents('php://input');
+        $postBody = json_decode($postBodyRaw, true);
         $password = $_REQUEST['password'] ?? '';
         switch ($route) {
             case '/v1/login':
@@ -49,8 +51,8 @@ class Api {
                 $this->getMyTasksAction($tokenData->getUserId(), $queryParams);
                 break;
             case '/v1/createTask':
-                $this->validateToken($token);
-                $this->createTaskAction();
+                $tokenData = $this->validateToken($token);
+                $this->createTaskAction($tokenData->getUserId(), $postBody);
                 break;
             case '/v1/markAsDone':
                 $this->validateToken($token);
@@ -148,10 +150,29 @@ class Api {
         $this->formatResponse(['data' => $result]);
     }
 
-    public function createTaskAction(): void
+    /**
+     * @param int $userId
+     * @param array $postBody
+     */
+    public function createTaskAction(int $userId, array $postBody): void
     {
-        // TODO: implement
-        $this->formatResponse(['data' => 'create task.sql action']);
+        $title = $postBody['title'] ?? '';
+        $status = (int)($postBody['status'] ?? 0);
+        $priority = (int)($postBody['priority'] ?? 0);
+        $dueDate = (int)($postBody['dueDate'] ?? 0);
+
+        $taskRepository = new TaskRepository($this->getConnection());
+        $task = $taskRepository->addTask(
+            new Task(
+                0,
+                $title,
+                $userId,
+                $status,
+                $priority,
+                $dueDate
+            )
+        );
+        $this->formatResponse(['data' => $task]);
     }
 
     public function markAsDoneAction(): void

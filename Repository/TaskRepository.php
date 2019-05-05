@@ -46,4 +46,41 @@ class TaskRepository
             return $this->mapper->fromArray($row);
         }, $result);
     }
+
+    /**
+     * @param int $id
+     * @return Task
+     */
+    public function getById(int $id): Task
+    {
+        $sth = $this->connection->prepare('SELECT * FROM `task` WHERE id = :id');
+        $sth->bindParam(':id', $id, PDO::PARAM_INT);
+        $sth->execute();
+        $result = $sth->fetch(PDO::FETCH_ASSOC);
+        return $this->mapper->fromArray($result);
+    }
+
+    /**
+     * @param Task $task
+     * @return Task
+     */
+    public function addTask(Task $task): Task
+    {
+        $sth = $this->connection->prepare(
+            'INSERT INTO `task` (`title`, `userId`, `status`, `priority`, `dueDate`)
+            VALUES (:title, :userId, :status, :priority, :dueDate)'
+        );
+        $sth->execute(
+            [
+                ':title' => $task->getTitle(),
+                ':userId' => $task->getUserId(),
+                ':status' => $task->getStatus(),
+                ':priority' => $task->getPriority(),
+                ':dueDate' => $task->getDueDate(),
+            ]
+        );
+        return $this->getById(
+            (int) $this->connection->lastInsertId()
+        );
+    }
 }
