@@ -165,7 +165,6 @@ class Api {
         $status = (int)($postBody['status'] ?? 0);
         $priority = (int)($postBody['priority'] ?? 0);
         $dueDate = (int)($postBody['dueDate'] ?? 0);
-
         $taskRepository = new TaskRepository($this->getConnection());
         $task = $taskRepository->addTask(
             new Task(
@@ -181,12 +180,17 @@ class Api {
         $this->formatResponse(['data' => $mapper->toArray($task)]);
     }
 
+    /**
+     * @param int $userId
+     * @param array $queryData
+     * @throws UnauthorizedException
+     */
     public function markAsDoneAction(int $userId, array $queryData): void
     {
         $id = (int)($queryData['id'] ?? 0);
-
         $taskRepository = new TaskRepository($this->getConnection());
         $task = $taskRepository->getById($id);
+        $this->canModifyTask($userId, $task);
         $doneStatus = 2;
         $task = $taskRepository->updateTask(
             new Task(
@@ -228,6 +232,24 @@ class Api {
             throw new UnauthorizedException('Token was not found');
         }
         return $tokenData;
+    }
+
+    /**
+     * @param int $userId
+     * @param Task $task
+     * @return void
+     * @throws UnauthorizedException
+     */
+    private function canModifyTask(int $userId, Task $task): void
+    {
+        if ($userId !== $task->getUserId()) {
+            throw new UnauthorizedException(
+                sprintf('User (id=%s) cannot modify task (id=%s)',
+                    $userId,
+                    $task->getId()
+                )
+            );
+        }
     }
 
     /**
