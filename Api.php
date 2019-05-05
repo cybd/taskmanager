@@ -60,8 +60,8 @@ class Api {
                 $this->markAsDoneAction($tokenData->getUserId(), $postBody);
                 break;
             case '/v1/deleteTask':
-                $this->validateToken($token);
-                $this->deleteTaskAction();
+                $tokenData = $this->validateToken($token);
+                $this->deleteTaskAction($tokenData->getUserId(), $postBody);
                 break;
             default:
                 $this->unknownAction();
@@ -177,7 +177,7 @@ class Api {
             )
         );
         $mapper = new TaskMapper();
-        $this->formatResponse(['data' => $mapper->toArray($task)]);
+        $this->formatResponse(['data' => $mapper->toArray($task)], 201);
     }
 
     /**
@@ -206,10 +206,22 @@ class Api {
         $this->formatResponse(['data' => $mapper->toArray($task)]);
     }
 
-    public function deleteTaskAction(): void
+    /**
+     * @param int $userId
+     * @param array $queryData
+     * @throws UnauthorizedException
+     */
+    public function deleteTaskAction(int $userId, array $queryData): void
     {
-        // TODO: implement
-        $this->formatResponse(['data' => 'delete task.sql action']);
+        $id = (int)($queryData['id'] ?? 0);
+        $taskRepository = new TaskRepository($this->getConnection());
+        $task = $taskRepository->getById($id);
+        $this->canModifyTask($userId, $task);
+        $taskRepository->deleteTask($task);
+        $this->formatResponse([
+        ],
+            204
+        );
     }
 
     /**

@@ -114,4 +114,21 @@ class TaskRepository
         );
         return $this->getById($task->getId());
     }
+
+    /**
+     * @param Task $task
+     * @return bool
+     */
+    public function deleteTask(Task $task): bool
+    {
+        $sth = $this->connection->prepare(
+            'DELETE FROM `task` WHERE `id` = :id'
+        );
+        $sth->execute(
+            [
+                ':id' => $task->getId(),
+            ]
+        );
+        return ($sth->rowCount() === 1);
+    }
 }
