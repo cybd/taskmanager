@@ -30,9 +30,10 @@ class UserRepository
     public function getUserByEmailAndPassword(string $email, string $password): User
     {
         $sth = $this->connection->prepare('SELECT * FROM `user` WHERE email = :email AND password = :password');
-        $sth->bindParam(':email', $email, PDO::PARAM_STR);
-        $sth->bindParam(':password', $password, PDO::PARAM_STR);
-        $sth->execute();
+        $sth->execute([
+            ':email' => $email,
+            ':password' => $password,
+        ]);
         $result = $sth->fetchAll(PDO::FETCH_ASSOC);
         if ($sth->rowCount() === 0) {
             throw new NotFoundException(
@@ -60,8 +61,9 @@ class UserRepository
     public function getById(int $id): User
     {
         $sth = $this->connection->prepare('SELECT * FROM `user` WHERE id = :id');
-        $sth->bindParam(':id', $id, PDO::PARAM_INT);
-        $sth->execute();
+        $sth->execute([
+            ':id' => $id,
+        ]);
         $result = $sth->fetch(PDO::FETCH_ASSOC);
         return $this->mapper->fromArray($result);
     }

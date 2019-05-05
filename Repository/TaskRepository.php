@@ -39,8 +39,9 @@ class TaskRepository
         $sortQuery = sprintf(' ORDER BY `%s` %s', $sort, $sortDesc ? 'DESC' : '');
         $limitQuery = sprintf(' LIMIT %s, %s', ($page - 1) * $perPage, $perPage);
         $sth = $this->connection->prepare('SELECT * FROM task WHERE userId = :userId' . $sortQuery . $limitQuery);
-        $sth->bindParam(':userId', $userId, PDO::PARAM_INT);
-        $sth->execute();
+        $sth->execute([
+            ':userId' => $userId,
+        ]);
         $result = $sth->fetchAll(PDO::FETCH_ASSOC);
         return array_map(function ($row) {
             return $this->mapper->fromArray($row);
@@ -54,8 +55,10 @@ class TaskRepository
     public function getById(int $id): Task
     {
         $sth = $this->connection->prepare('SELECT * FROM `task` WHERE id = :id');
-        $sth->bindParam(':id', $id, PDO::PARAM_INT);
-        $sth->execute();
+        $sth->execute([
+            ':id' => $id,
+            ]
+        );
         $result = $sth->fetch(PDO::FETCH_ASSOC);
         return $this->mapper->fromArray($result);
     }

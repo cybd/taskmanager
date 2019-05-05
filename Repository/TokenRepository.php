@@ -27,9 +27,10 @@ class TokenRepository
     {
         $now = time();
         $sth = $this->connection->prepare('SELECT * FROM `token` WHERE userId = :userId AND expiredAt < :current');
-        $sth->bindParam(':userId', $userId, PDO::PARAM_INT);
-        $sth->bindParam(':current', $now, PDO::PARAM_INT);
-        $sth->execute();
+        $sth->execute([
+            ':userId' => $userId,
+            ':current' => $now,
+        ]);
         $result = $sth->fetch(PDO::FETCH_ASSOC);
         return $this->mapper->fromArray($result);
     }
@@ -41,8 +42,9 @@ class TokenRepository
     public function getById(int $id): Token
     {
         $sth = $this->connection->prepare('SELECT * FROM `token` WHERE id = :id');
-        $sth->bindParam(':id', $id, PDO::PARAM_INT);
-        $sth->execute();
+        $sth->execute([
+            'id' => $id,
+        ]);
         $result = $sth->fetch(PDO::FETCH_ASSOC);
         return $this->mapper->fromArray($result);
     }
@@ -77,8 +79,9 @@ class TokenRepository
     public function getByToken(string $token): Token
     {
         $sth = $this->connection->prepare('SELECT * FROM `token` WHERE token = :token');
-        $sth->bindParam(':token', $token, PDO::PARAM_STR);
-        $sth->execute();
+        $sth->execute([
+            ':token' => $token,
+        ]);
         $result = $sth->fetchAll(PDO::FETCH_ASSOC);
         if ($sth->rowCount() === 0) {
             throw new NotFoundException(
