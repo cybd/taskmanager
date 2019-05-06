@@ -9,7 +9,7 @@ class Task {
     private $userId;
     /** @var int */
     private $status;
-    /** @var int */
+    /** @var TaskPriority */
     private $priority;
     /** @var int */
     private $dueDate;
@@ -19,12 +19,18 @@ class Task {
      * @param int $id
      * @param string $title
      * @param int $userId
-     * @param int $status
-     * @param int $priority
+     * @param TaskStatus $status
+     * @param TaskPriority $priority
      * @param int $dueDate
      */
-    public function __construct(int $id, string $title, int $userId, int $status, int $priority, int $dueDate)
-    {
+    public function __construct(
+        int $id,
+        string $title,
+        int $userId,
+        TaskStatus $status,
+        TaskPriority $priority,
+        int $dueDate
+    ) {
         $this->title = $title;
         $this->userId = $userId;
         $this->status = $status;
@@ -58,17 +64,17 @@ class Task {
     }
 
     /**
-     * @return int
+     * @return TaskStatus
      */
-    public function getStatus(): int
+    public function getStatus(): TaskStatus
     {
         return $this->status;
     }
 
     /**
-     * @return int
+     * @return TaskPriority
      */
-    public function getPriority(): int
+    public function getPriority(): TaskPriority
     {
         return $this->priority;
     }

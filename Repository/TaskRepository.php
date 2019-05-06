@@ -51,6 +51,7 @@ class TaskRepository
     /**
      * @param int $id
      * @return Task
+     * @throws ReflectionException
      */
     public function getById(int $id): Task
     {
@@ -66,6 +67,7 @@ class TaskRepository
     /**
      * @param Task $task
      * @return Task
+     * @throws ReflectionException
      */
     public function addTask(Task $task): Task
     {
@@ -77,8 +79,8 @@ class TaskRepository
             [
                 ':title' => $task->getTitle(),
                 ':userId' => $task->getUserId(),
-                ':status' => $task->getStatus(),
-                ':priority' => $task->getPriority(),
+                ':status' => $task->getStatus()->getValue(),
+                ':priority' => $task->getPriority()->getValue(),
                 ':dueDate' => $task->getDueDate(),
             ]
         );
@@ -90,6 +92,7 @@ class TaskRepository
     /**
      * @param Task $task
      * @return Task
+     * @throws ReflectionException
      */
     public function updateTask(Task $task): Task
     {
@@ -106,8 +109,8 @@ class TaskRepository
             [
                 ':title' => $task->getTitle(),
                 ':userId' => $task->getUserId(),
-                ':status' => $task->getStatus(),
-                ':priority' => $task->getPriority(),
+                ':status' => $task->getStatus()->getValue(),
+                ':priority' => $task->getPriority()->getValue(),
                 ':dueDate' => $task->getDueDate(),
                 ':id' => $task->getId(),
             ]

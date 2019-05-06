@@ -7,6 +7,7 @@ class TaskMapper
     /**
      * @param array $map
      * @return Task
+     * @throws ReflectionException
      */
     public function fromArray(array $map): Task
     {
@@ -14,8 +15,8 @@ class TaskMapper
             (int) $map['id'],
             $map['title'],
             (int) $map['userId'],
-            (int) $map['status'],
-            (int) $map['priority'],
+            new TaskStatus((int) $map['status']),
+            new TaskPriority((int) $map['priority']),
             (int) $map['dueDate']
         );
     }
@@ -30,8 +31,8 @@ class TaskMapper
             'id' => $task->getId(),
             'title' => $task->getTitle(),
             'userId' => $task->getUserId(),
-            'status' => $task->getStatus(),
-            'priority' => $task->getPriority(),
+            'status' => $task->getStatus()->getTextValue(),
+            'priority' => $task->getPriority()->getTextValue(),
             'dueDate' => $task->getDueDate(),
         ];
     }

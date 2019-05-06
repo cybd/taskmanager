@@ -7,6 +7,8 @@ require_once 'Repository/TaskRepository.php';
 require_once 'Repository/TokenRepository.php';
 require_once 'Repository/UserRepository.php';
 require_once 'Mapper/TaskMapper.php';
+require_once 'Enum/TaskPriority.php';
+require_once 'Enum/TaskStatus.php';
 
 class Api {
 
@@ -142,14 +144,9 @@ class Api {
         $result = [];
         if (\count($taskCollection) > 0) {
             /** @var Task $task */
+            $mapper = new TaskMapper();
             foreach ($taskCollection as $task) {
-                $result[] = [
-                    'id' => $task->getId(),
-                    'title' => $task->getTitle(),
-                    'status' => $task->getStatus(),
-                    'priority' => $task->getPriority(),
-                    'dueDate' => $task->getDueDate(),
-                ];
+                $result[] = $mapper->toArray($task);
             }
         }
         $this->formatResponse(['data' => $result]);
@@ -158,12 +155,13 @@ class Api {
     /**
      * @param int $userId
      * @param array $postBody
+     * @throws ReflectionException
      */
     public function createTaskAction(int $userId, array $postBody): void
     {
         $title = $postBody['title'] ?? '';
-        $status = (int)($postBody['status'] ?? 0);
-        $priority = (int)($postBody['priority'] ?? 0);
+        $priority = new TaskPriority($postBody['priority']);
+        $status = new TaskStatus($postBody['status']);
         $dueDate = (int)($postBody['dueDate'] ?? 0);
         $taskRepository = new TaskRepository($this->getConnection());
         $task = $taskRepository->addTask(
@@ -184,6 +182,7 @@ class Api {
      * @param int $userId
      * @param array $queryData
      * @throws UnauthorizedException
+     * @throws ReflectionException
      */
     public function markAsDoneAction(int $userId, array $queryData): void
     {
@@ -191,13 +190,12 @@ class Api {
         $taskRepository = new TaskRepository($this->getConnection());
         $task = $taskRepository->getById($id);
         $this->canModifyTask($userId, $task);
-        $doneStatus = 2;
         $task = $taskRepository->updateTask(
             new Task(
                 $task->getId(),
                 $task->getTitle(),
                 $task->getUserId(),
-                $doneStatus,
+                new TaskStatus(TaskStatus::DONE),
                 $task->getPriority(),
                 $task->getDueDate()
             )
@@ -210,6 +208,7 @@ class Api {
      * @param int $userId
      * @param array $queryData
      * @throws UnauthorizedException
+     * @throws ReflectionException
      */
     public function deleteTaskAction(int $userId, array $queryData): void
     {
