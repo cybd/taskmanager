@@ -14,6 +14,7 @@ class Api {
 
     private const API_TOKEN_SALT = 'MyLittleSaltHere2019';
     private const API_TOKEN_LIFETIME = 60 * 15; // 15 min
+    private const API_USER_PASSWORD_SALT = 'UserPasswordHash2019';
 
     /** @var MySQLConnection */
     private $connection;
@@ -78,7 +79,10 @@ class Api {
     {
         try {
             $userRepository = new UserRepository($this->getConnection());
-            $user = $userRepository->getUserByEmailAndPassword($email, $password);
+            $user = $userRepository->getUserByEmailAndPassword(
+                $email,
+                $this->getUserPasswordHash($password)
+            );
             $tokenRepository = new TokenRepository($this->getConnection());
             $expireAt = time() + self::API_TOKEN_LIFETIME;
             $token = $tokenRepository->addToken(
@@ -109,7 +113,13 @@ class Api {
     public function registerAction(string $email, string $password): void
     {
         $userRepository = new UserRepository($this->getConnection());
-        $user = $userRepository->addUser($email, $password);
+        $user = $userRepository->addUser(
+            new User(
+                0,
+                $email,
+                $this->getUserPasswordHash($password)
+            )
+        );
         $tokenRepository = new TokenRepository($this->getConnection());
         $expireAt = time() + self::API_TOKEN_LIFETIME;
         $token = $tokenRepository->addToken(
@@ -156,6 +166,7 @@ class Api {
      * @param int $userId
      * @param array $postBody
      * @throws ReflectionException
+     * @throws NotFoundException
      */
     public function createTaskAction(int $userId, array $postBody): void
     {
@@ -183,6 +194,7 @@ class Api {
      * @param array $queryData
      * @throws UnauthorizedException
      * @throws ReflectionException
+     * @throws NotFoundException
      */
     public function markAsDoneAction(int $userId, array $queryData): void
     {
@@ -207,8 +219,9 @@ class Api {
     /**
      * @param int $userId
      * @param array $queryData
-     * @throws UnauthorizedException
+     * @throws NotFoundException
      * @throws ReflectionException
+     * @throws UnauthorizedException
      */
     public function deleteTaskAction(int $userId, array $queryData): void
     {
@@ -282,6 +295,15 @@ class Api {
     private function generateTokenByUser(User $user): string
     {
         return sha1($user->getEmail() . $user->getId() . self::API_TOKEN_SALT . microtime());
+    }
+
+    /**
+     * @param string $value
+     * @return string
+     */
+    private function getUserPasswordHash(string $value): string
+    {
+        return sha1($value . self::API_USER_PASSWORD_SALT);
     }
 
     public function unknownAction(): void

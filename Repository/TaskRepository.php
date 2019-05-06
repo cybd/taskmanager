@@ -52,6 +52,7 @@ class TaskRepository
      * @param int $id
      * @return Task
      * @throws ReflectionException
+     * @throws NotFoundException
      */
     public function getById(int $id): Task
     {
@@ -61,6 +62,14 @@ class TaskRepository
             ]
         );
         $result = $sth->fetch(PDO::FETCH_ASSOC);
+        if ($sth->rowCount() === 0) {
+            throw new NotFoundException(
+                sprintf(
+                    'Task by id %s not found',
+                    $id
+                )
+            );
+        }
         return $this->mapper->fromArray($result);
     }
 
@@ -68,6 +77,7 @@ class TaskRepository
      * @param Task $task
      * @return Task
      * @throws ReflectionException
+     * @throws NotFoundException
      */
     public function addTask(Task $task): Task
     {
@@ -93,6 +103,7 @@ class TaskRepository
      * @param Task $task
      * @return Task
      * @throws ReflectionException
+     * @throws NotFoundException
      */
     public function updateTask(Task $task): Task
     {

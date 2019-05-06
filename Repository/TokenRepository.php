@@ -38,6 +38,7 @@ class TokenRepository
     /**
      * @param int $id
      * @return Token
+     * @throws NotFoundException
      */
     public function getById(int $id): Token
     {
@@ -46,12 +47,21 @@ class TokenRepository
             'id' => $id,
         ]);
         $result = $sth->fetch(PDO::FETCH_ASSOC);
+        if ($sth->rowCount() === 0) {
+            throw new NotFoundException(
+                sprintf(
+                    'Token by Id %s not found',
+                    $id
+                )
+            );
+        }
         return $this->mapper->fromArray($result);
     }
 
     /**
      * @param Token $token
      * @return Token
+     * @throws NotFoundException
      */
     public function addToken(Token $token): Token
     {

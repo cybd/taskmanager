@@ -57,6 +57,7 @@ class UserRepository
     /**
      * @param int $id
      * @return User
+     * @throws NotFoundException
      */
     public function getById(int $id): User
     {
@@ -65,16 +66,24 @@ class UserRepository
             ':id' => $id,
         ]);
         $result = $sth->fetch(PDO::FETCH_ASSOC);
+        if ($sth->rowCount() === 0) {
+            throw new NotFoundException(
+                sprintf(
+                    'User by Id %s not found',
+                    $id
+                )
+            );
+        }
         return $this->mapper->fromArray($result);
     }
 
     /**
-     * @param string $email
-     * @param string $password
+     * @param User $user
      * @return User
+     * @throws DatabaseDuplicateException
      * @throws Throwable
      */
-    public function addUser(string $email, string $password): User
+    public function addUser(User $user): User
     {
         try {
             $sth = $this->connection->prepare(
@@ -83,8 +92,8 @@ class UserRepository
             );
             $sth->execute(
                 [
-                    ':email' => $email,
-                    ':password' => $password,
+                    ':email' => $user->getEmail(),
+                    ':password' => $user->getPassword(),
                 ]
             );
         } catch (\Throwable $e) {
@@ -92,7 +101,7 @@ class UserRepository
                 throw new DatabaseDuplicateException(
                     sprintf(
                         'User with email %s already exists',
-                        $email
+                        $user->getEmail()
                     )
                 );
             }
