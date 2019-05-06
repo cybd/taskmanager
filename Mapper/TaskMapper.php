@@ -30,7 +30,6 @@ class TaskMapper
         return [
             'id' => $task->getId(),
             'title' => $task->getTitle(),
-            'userId' => $task->getUserId(),
             'status' => $task->getStatus()->getTextValue(),
             'priority' => $task->getPriority()->getTextValue(),
             'dueDate' => $task->getDueDate(),
